@@ -1,0 +1,4 @@
+project_id = "cghwlpomtpbsojiyepik"
+
+[functions.generate-supplements]
+verify_jwt = false
