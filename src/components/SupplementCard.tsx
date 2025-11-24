@@ -26,7 +26,7 @@ interface SupplementCardProps {
   evidenceLevel: "A" | "B" | "C" | "D";
   keyBenefits: string[];
   warnings?: string[];
-  ingredients: string[];
+  ingredients: (string | { name: string; dosage?: string })[];
   price?: string;
   imageUrl?: string;
   scientificPapers?: ScientificPaper[];
@@ -137,11 +137,17 @@ export function SupplementCard({
         <div className="space-y-2">
           <h4 className="text-sm font-medium">Active Ingredients</h4>
           <div className="flex flex-wrap gap-1.5">
-            {ingredients.map((ingredient, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {ingredient}
-              </Badge>
-            ))}
+            {ingredients.map((ingredient, index) => {
+              const displayText = typeof ingredient === 'string' 
+                ? ingredient 
+                : `${ingredient.name}${ingredient.dosage ? ` ${ingredient.dosage}` : ''}`;
+              
+              return (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {displayText}
+                </Badge>
+              );
+            })}
           </div>
         </div>
 

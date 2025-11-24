@@ -30,7 +30,7 @@ interface Supplement {
   evidenceLevel: "A" | "B" | "C" | "D";
   keyBenefits: string[];
   warnings: string[];
-  ingredients: string[];
+  ingredients: (string | { name: string; dosage?: string })[];
   price: string;
   scientificPapers?: ScientificPaper[];
   socialTrends?: SocialTrend[];
