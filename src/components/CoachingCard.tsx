@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Youtube, Target, AlertCircle, TrendingUp, Package } from "lucide-react";
+import { Youtube, Target, AlertCircle, TrendingUp, Package, ExternalLink } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface YouTubeVideo {
@@ -140,14 +140,17 @@ export function CoachingCard({
               href={video.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block p-4 border rounded-lg hover:border-primary hover:bg-primary/5 transition-all group"
+              className="block p-4 border-2 rounded-lg hover:border-primary hover:bg-primary/5 transition-all group cursor-pointer hover:shadow-md"
             >
               <div className="flex items-start gap-3">
                 <Youtube className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <h5 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2">
-                    {video.title}
-                  </h5>
+                  <div className="flex items-start justify-between gap-2">
+                    <h5 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2 underline decoration-transparent group-hover:decoration-primary">
+                      {video.title}
+                    </h5>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {video.channel}
                     {video.relevantTimestamp && ` • Start at ${video.relevantTimestamp}`}
