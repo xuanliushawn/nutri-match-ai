@@ -1,10 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { HeroSection } from "@/components/HeroSection";
 import { ResultsSection } from "@/components/ResultsSection";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isGuestMode = searchParams.get("guest") === "true";
+  
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    // Check auth status
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      // If not guest mode and no user, redirect to auth
+      if (!session && !isGuestMode) {
+        navigate("/auth");
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      
+      if (!session && !isGuestMode) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, isGuestMode]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -15,6 +49,19 @@ const Index = () => {
     setShowResults(false);
     setSearchQuery(null);
   };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -29,14 +76,28 @@ const Index = () => {
             </div>
             <span className="text-xl font-bold">NutriMatch AI</span>
           </div>
-          {showResults && (
-            <button 
-              onClick={handleNewSearch}
-              className="text-sm text-primary hover:underline font-medium"
-            >
-              New Search
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {user && !isGuestMode && (
+              <Button variant="outline" onClick={() => navigate("/profile")}>
+                Profile
+              </Button>
+            )}
+            {showResults && (
+              <Button onClick={handleNewSearch}>
+                New Search
+              </Button>
+            )}
+            {user && !isGuestMode && (
+              <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            )}
+            {isGuestMode && (
+              <Button variant="outline" onClick={() => navigate("/auth")}>
+                Create Account
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
