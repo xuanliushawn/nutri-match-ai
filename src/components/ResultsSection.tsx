@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ResultsSectionProps {
   query: string;
+  answers?: Record<string, string>;
 }
 
 interface ScientificPaper {
@@ -34,10 +35,12 @@ interface Supplement {
   price: string;
   scientificPapers?: ScientificPaper[];
   socialTrends?: SocialTrend[];
+  personalizedReason?: string;
+  recommendedDose?: string;
 }
 
 
-export function ResultsSection({ query }: ResultsSectionProps) {
+export function ResultsSection({ query, answers = {} }: ResultsSectionProps) {
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +54,7 @@ export function ResultsSection({ query }: ResultsSectionProps) {
         const { data, error: functionError } = await supabase.functions.invoke(
           'generate-supplements',
           {
-            body: { query }
+            body: { query, answers }
           }
         );
 
@@ -73,7 +76,7 @@ export function ResultsSection({ query }: ResultsSectionProps) {
     };
 
     fetchSupplements();
-  }, [query]);
+  }, [query, answers]);
 
   return (
     <section className="py-16 bg-background">

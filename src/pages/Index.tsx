@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { HeroSection } from "@/components/HeroSection";
+import { QuestionnaireSection } from "@/components/QuestionnaireSection";
 import { ResultsSection } from "@/components/ResultsSection";
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +15,9 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Check auth status
@@ -42,12 +45,21 @@ const Index = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setShowQuestionnaire(true);
+    setShowResults(false);
+  };
+
+  const handleQuestionnaireComplete = (answers: Record<string, string>) => {
+    setQuestionnaireAnswers(answers);
+    setShowQuestionnaire(false);
     setShowResults(true);
   };
 
   const handleNewSearch = () => {
     setShowResults(false);
+    setShowQuestionnaire(false);
     setSearchQuery(null);
+    setQuestionnaireAnswers({});
   };
 
   const handleSignOut = async () => {
@@ -103,11 +115,17 @@ const Index = () => {
 
       {/* Main Content */}
       <main>
-        {!showResults ? (
+        {!showQuestionnaire && !showResults ? (
           <HeroSection onSearch={handleSearch} />
-        ) : (
-          searchQuery && <ResultsSection query={searchQuery} />
-        )}
+        ) : showQuestionnaire && searchQuery ? (
+          <QuestionnaireSection 
+            query={searchQuery} 
+            onComplete={handleQuestionnaireComplete}
+            loading={false}
+          />
+        ) : showResults && searchQuery ? (
+          <ResultsSection query={searchQuery} answers={questionnaireAnswers} />
+        ) : null}
       </main>
 
       {/* Footer */}

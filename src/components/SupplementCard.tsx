@@ -31,6 +31,8 @@ interface SupplementCardProps {
   imageUrl?: string;
   scientificPapers?: ScientificPaper[];
   socialTrends?: SocialTrend[];
+  personalizedReason?: string;
+  recommendedDose?: string;
 }
 
 export function SupplementCard({
@@ -45,6 +47,8 @@ export function SupplementCard({
   imageUrl,
   scientificPapers,
   socialTrends,
+  personalizedReason,
+  recommendedDose,
 }: SupplementCardProps) {
   const getEvidenceBadgeVariant = (level: string) => {
     switch (level) {
@@ -102,6 +106,24 @@ export function SupplementCard({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Personalized Recommendation */}
+        {personalizedReason && (
+          <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+            <h4 className="text-sm font-semibold text-primary flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Why This Is Good For You
+            </h4>
+            <p className="text-sm">{personalizedReason}</p>
+            {recommendedDose && (
+              <p className="text-sm font-medium text-primary">
+                Recommended Dose: {recommendedDose}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Social Sentiment */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
