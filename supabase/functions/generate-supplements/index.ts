@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
+    const { query, answers = {} } = await req.json();
     
     // Get user profile if authenticated
     const authHeader = req.headers.get('Authorization');
@@ -73,6 +73,14 @@ ${geneticInfo ? `- Genetic Variants: ${geneticInfo}` : ""}
 Consider this profile when making recommendations. Adjust dosages based on age/sex, avoid ingredients incompatible with dietary restrictions, and provide genetic-specific advice if relevant SNPs are present.`;
     }
 
+    let answersContext = "";
+    if (Object.keys(answers).length > 0) {
+      answersContext = `\n\nQuestionnaire Answers:
+${Object.entries(answers).map(([key, value]) => `- ${key}: ${value}`).join("\n")}
+
+Use these answers to further personalize recommendations and dosages.`;
+    }
+
     const systemPrompt = `You are a supplement recommendation AI that analyzes health goals and recommends evidence-based supplements.
 
 For each health goal, provide exactly 3 supplement recommendations in JSON format. Each recommendation should include:
@@ -95,12 +103,16 @@ For each health goal, provide exactly 3 supplement recommendations in JSON forma
   - platform: "TikTok", "Instagram", or "Reddit"
   - hashtag: Relevant hashtag (e.g., "#CollagenGlow")
   - mentions: Approximate post count (realistic numbers)
+- personalizedReason: 2-3 sentence personalized explanation of why this supplement is good for the user based on their profile, questionnaire answers, and genetics (if provided). Make it specific to THEIR situation.
+- recommendedDose: Specific daily dose recommendation adjusted for the user's profile (age, sex, activity level, etc.)
 
 Return ONLY valid JSON array with no markdown formatting or explanation.`;
 
     const userPrompt = `Generate 3 supplement recommendations for this health goal: "${query}"
 
-Focus on supplements that have real scientific backing and user reviews. Be specific with dosages, timeframes, and warnings. Make sure the recommendations are relevant to the specific health goal.${profileContext}`;
+Focus on supplements that have real scientific backing and user reviews. Be specific with dosages, timeframes, and warnings. Make sure the recommendations are relevant to the specific health goal.${profileContext}${answersContext}
+
+CRITICAL: Create highly personalized "personalizedReason" and "recommendedDose" fields that reflect the user's unique profile, questionnaire answers, and genetic data. Don't use generic explanations—make them specific to THIS user's situation.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
