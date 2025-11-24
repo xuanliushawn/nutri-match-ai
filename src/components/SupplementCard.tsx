@@ -11,6 +11,8 @@ interface ScientificPaper {
   year: number;
   pmid: string;
   summary: string;
+  verified?: boolean;
+  studyType?: string;
 }
 
 interface SocialTrend {
@@ -33,6 +35,7 @@ interface SupplementCardProps {
   socialTrends?: SocialTrend[];
   personalizedReason?: string;
   recommendedDose?: string;
+  dataSource?: string;
 }
 
 export function SupplementCard({
@@ -49,6 +52,7 @@ export function SupplementCard({
   socialTrends,
   personalizedReason,
   recommendedDose,
+  dataSource,
 }: SupplementCardProps) {
   const getEvidenceBadgeVariant = (level: string) => {
     switch (level) {
@@ -198,22 +202,47 @@ export function SupplementCard({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Scientific Evidence
+              {dataSource === 'pubmed' && (
+                <Badge variant="success" className="text-xs">
+                  <Award className="w-3 h-3 mr-1" />
+                  Real Data
+                </Badge>
+              )}
             </h4>
             <div className="space-y-2">
               {scientificPapers.map((paper, index) => (
-                <div key={index} className="text-xs space-y-1">
-                  <p className="font-medium">{paper.title}</p>
+                <div key={index} className="text-xs space-y-1 p-3 bg-background/50 rounded-lg border">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium flex-1">{paper.title}</p>
+                    {paper.verified && (
+                      <Badge variant="success" className="text-xs flex-shrink-0">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-muted-foreground">
                     {paper.authors} - {paper.journal}, {paper.year}
                   </p>
+                  {paper.studyType && (
+                    <Badge variant="outline" className="text-xs">
+                      {paper.studyType === 'rct' && 'Randomized Controlled Trial'}
+                      {paper.studyType === 'meta-analysis' && 'Meta-Analysis'}
+                      {paper.studyType === 'systematic-review' && 'Systematic Review'}
+                      {paper.studyType === 'observational' && 'Observational Study'}
+                    </Badge>
+                  )}
                   <p className="text-muted-foreground italic">{paper.summary}</p>
                   <a 
                     href={`https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center gap-1"
+                    className="text-primary hover:underline inline-flex items-center gap-1 font-medium"
+                    title="View this paper on PubMed's scientific database"
                   >
-                    View on PubMed <ExternalLink className="w-3 h-3" />
+                    PMID: {paper.pmid} <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               ))}

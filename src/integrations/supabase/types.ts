@@ -62,6 +62,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pubmed_cache: {
+        Row: {
+          created_at: string
+          fetched_at: string
+          id: string
+          ingredient_name: string
+          papers_json: Json
+        }
+        Insert: {
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          ingredient_name: string
+          papers_json: Json
+        }
+        Update: {
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          ingredient_name?: string
+          papers_json?: Json
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
