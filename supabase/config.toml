@@ -2,3 +2,6 @@ project_id = "cghwlpomtpbsojiyepik"
 
 [functions.generate-supplements]
 verify_jwt = false
+
+[functions.generate-coaching]
+verify_jwt = false
