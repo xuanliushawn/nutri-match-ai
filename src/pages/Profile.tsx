@@ -29,7 +29,14 @@ const Profile = () => {
 
   const dietaryOptions = ["Vegan", "Vegetarian", "Keto", "Paleo", "Gluten-Free", "Dairy-Free", "Low-Carb"];
   const commonAllergies = ["Nuts", "Shellfish", "Soy", "Eggs", "Dairy", "Gluten", "Fish"];
-  const snpOptions = ["MTHFR C677T", "MTHFR A1298C", "VDR Bsm", "VDR Taq", "APOE ε4", "COMT Val158Met"];
+  const snpOptions = [
+    { id: "mthfr", label: "MTHFR C677T/A1298C (Folate metabolism)" },
+    { id: "vdr", label: "VDR (Vitamin D receptor)" },
+    { id: "apoe", label: "APOE ε4 (Alzheimer's risk)" },
+    { id: "comt", label: "COMT (Dopamine/stress response)" },
+    { id: "fto", label: "FTO (Obesity/metabolism)" },
+    { id: "cyp1a2", label: "CYP1A2 (Caffeine metabolism)" }
+  ];
 
   useEffect(() => {
     loadProfile();
@@ -253,47 +260,66 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Genetic Data (SNPs)</Label>
-              <p className="text-sm text-muted-foreground mb-3">
-                Select any genetic markers you have tested for:
-              </p>
-              <div className="grid grid-cols-1 gap-3">
-                {snpOptions.map((snp) => (
-                  <div key={snp} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`snp-${snp}`}
-                      checked={profile.genetic_data_snps[snp] || false}
-                      onCheckedChange={(checked) =>
-                        setProfile({
-                          ...profile,
-                          genetic_data_snps: {
-                            ...profile.genetic_data_snps,
-                            [snp]: checked as boolean,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor={`snp-${snp}`} className="text-sm cursor-pointer">
-                      {snp}
-                    </label>
-                  </div>
-                ))}
+            <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
+              <div>
+                <Label className="text-base">Genetic Data (Optional)</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Add your genetic information for more personalized recommendations. Choose one or both methods below.
+                </p>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="genetic-file">Upload Genetic Data File (Optional)</Label>
-              <p className="text-sm text-muted-foreground">
-                Upload raw DNA data from 23andMe, AncestryDNA, etc. (Coming soon)
-              </p>
-              <Input
-                id="genetic-file"
-                type="file"
-                accept=".txt,.csv"
-                disabled
-                className="opacity-50 cursor-not-allowed"
-              />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Quick SNP Checkboxes</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select genetic variants you've tested positive for:
+                </p>
+                <div className="grid grid-cols-1 gap-3">
+                  {snpOptions.map((snp) => (
+                    <div key={snp.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`snp-${snp.id}`}
+                        checked={profile.genetic_data_snps[snp.id] || false}
+                        onCheckedChange={(checked) =>
+                          setProfile({
+                            ...profile,
+                            genetic_data_snps: {
+                              ...profile.genetic_data_snps,
+                              [snp.id]: checked as boolean,
+                            },
+                          })
+                        }
+                      />
+                      <label htmlFor={`snp-${snp.id}`} className="text-sm cursor-pointer">
+                        {snp.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="genetic-file" className="text-sm font-semibold">Raw DNA File Upload</Label>
+                <p className="text-xs text-muted-foreground">
+                  Upload your raw genetic data file from 23andMe, AncestryDNA (TXT or CSV format)
+                </p>
+                <Input
+                  id="genetic-file"
+                  type="file"
+                  accept=".txt,.csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setProfile({ ...profile, genetic_data_file_url: file.name });
+                      toast.info(`File selected: ${file.name}. Full upload functionality coming soon.`);
+                    }
+                  }}
+                />
+                {profile.genetic_data_file_url && (
+                  <p className="text-xs text-muted-foreground">
+                    Current file: {profile.genetic_data_file_url}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-4">
