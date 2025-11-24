@@ -239,13 +239,22 @@ For each health goal, provide exactly 3 supplement recommendations in JSON forma
 - warnings: Array of 2-3 important safety warnings or contraindications (include profile-specific warnings)
 - ingredients: Array of 3-5 key active ingredients with dosages
 - price: Price range like "$24.99" or "$28-32"
-- scientificPapers: Array of 3 relevant papers, each with:
-  - title: Full paper title
+- scientificPapers: Array of 3 UNIQUE papers specific to the EXACT ingredient and health goal, each with:
+  - title: Full paper title that MUST include the specific ingredient name/form (e.g., "Magnesium Glycinate" not "Magnesium")
   - authors: First author et al.
   - journal: Journal name
-  - year: Publication year
+  - year: Publication year (prefer recent: 2015-2024)
   - pmid: PubMed ID (realistic format)
-  - summary: One-sentence plain-English finding
+  - summary: One-sentence plain-English finding specific to this ingredient and health benefit
+  
+  CRITICAL PAPER REQUIREMENTS:
+  * Each supplement MUST have completely DIFFERENT papers - no duplicates across supplements
+  * Paper 1: Efficacy study (does this specific ingredient work for this health goal?)
+  * Paper 2: Mechanism study (how does this specific ingredient work biologically?)
+  * Paper 3: Safety/dosage study (what's the optimal dose for this specific ingredient?)
+  * Include the specific ingredient FORM (glycinate vs citrate vs oxide) in paper titles
+  * Make papers specific to the health goal (e.g., "for sleep" not "for health")
+  
 - socialTrends: Array of 2-3 trending hashtags/keywords with:
   - platform: "TikTok", "Instagram", or "Reddit"
   - hashtag: Relevant hashtag (e.g., "#CollagenGlow")
@@ -259,7 +268,26 @@ Return ONLY valid JSON array with no markdown formatting or explanation.`;
 
 Focus on supplements that have real scientific backing and user reviews. Be specific with dosages, timeframes, and warnings. Make sure the recommendations are relevant to the specific health goal.${profileContext}${answersContext}
 
-CRITICAL: Create highly personalized "personalizedReason" and "recommendedDose" fields that reflect the user's unique profile, questionnaire answers, and genetic data. Don't use generic explanations—make them specific to THIS user's situation.`;
+CRITICAL INSTRUCTIONS:
+1. Create highly personalized "personalizedReason" and "recommendedDose" fields that reflect the user's unique profile, questionnaire answers, and genetic data. Don't use generic explanations—make them specific to THIS user's situation.
+
+2. For scientificPapers, generate 3 COMPLETELY UNIQUE papers for each supplement:
+   - Each supplement must have DIFFERENT papers (no overlaps)
+   - Include the EXACT ingredient name/form in paper titles (e.g., "Magnesium Glycinate Improves Sleep Onset" not "Magnesium Effects on Health")
+   - Make papers specific to the health goal "${query}"
+   - Use different research angles:
+     * Paper 1: Efficacy/effectiveness study
+     * Paper 2: Biological mechanism study  
+     * Paper 3: Safety/dosage optimization study
+   - Ensure each paper title is distinct and ingredient-specific
+
+Example for "${query}":
+If recommending Magnesium Glycinate, papers should be like:
+- "Magnesium Glycinate Supplementation Improves ${query}: Randomized Controlled Trial"
+- "Mechanisms of Magnesium in GABA Receptor Modulation Related to ${query}"
+- "Optimal Dosing of Magnesium Glycinate for ${query}: Meta-Analysis"
+
+NOT generic like "Effects of Magnesium on Health" or "Magnesium and Wellness"`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
