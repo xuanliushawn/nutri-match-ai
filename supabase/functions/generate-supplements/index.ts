@@ -154,6 +154,79 @@ CRITICAL: Create highly personalized "personalizedReason" and "recommendedDose" 
 
     console.log("Generated supplements:", supplements);
 
+    // Step 2: Fetch real PubMed papers for each supplement
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (supabaseUrl && supabaseKey && Array.isArray(supplements)) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      // Fetch PubMed papers for each supplement in parallel
+      const pubmedPromises = supplements.map(async (supplement: any) => {
+        try {
+          // Extract main ingredient name for PubMed search
+          const mainIngredient = Array.isArray(supplement.ingredients) && supplement.ingredients.length > 0
+            ? typeof supplement.ingredients[0] === 'string'
+              ? supplement.ingredients[0]
+              : supplement.ingredients[0].name
+            : supplement.name;
+          
+          console.log(`Fetching PubMed papers for: ${mainIngredient}`);
+          
+          const { data: pubmedData, error: pubmedError } = await supabase.functions.invoke(
+            'fetch-pubmed-papers',
+            { body: { ingredientName: mainIngredient, maxResults: 3 } }
+          );
+          
+          if (pubmedError) {
+            console.error(`PubMed fetch error for ${mainIngredient}:`, pubmedError);
+            return supplement; // Return original with AI-generated papers
+          }
+          
+          if (pubmedData?.papers && pubmedData.papers.length > 0) {
+            console.log(`Got ${pubmedData.papers.length} real papers for ${mainIngredient}`);
+            
+            // Calculate evidence level based on real papers
+            const studyTypes = pubmedData.papers.map((p: any) => p.studyType);
+            let evidenceLevel = supplement.evidenceLevel;
+            
+            if (studyTypes.includes('meta-analysis') || studyTypes.includes('systematic-review')) {
+              evidenceLevel = 'A';
+            } else if (studyTypes.filter((t: string) => t === 'rct').length >= 2) {
+              evidenceLevel = 'A';
+            } else if (studyTypes.includes('rct')) {
+              evidenceLevel = 'B';
+            } else if (pubmedData.papers.length >= 2) {
+              evidenceLevel = 'C';
+            } else {
+              evidenceLevel = 'D';
+            }
+            
+            return {
+              ...supplement,
+              scientificPapers: pubmedData.papers,
+              evidenceLevel,
+              dataSource: 'pubmed'
+            };
+          }
+          
+          return supplement; // Keep AI-generated papers if PubMed fails
+        } catch (error) {
+          console.error('Error fetching PubMed papers:', error);
+          return supplement; // Fallback to AI-generated papers
+        }
+      });
+      
+      const supplementsWithRealPapers = await Promise.all(pubmedPromises);
+      
+      return new Response(
+        JSON.stringify({ supplements: supplementsWithRealPapers }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({ supplements }),
       {

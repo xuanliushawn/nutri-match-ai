@@ -16,6 +16,8 @@ interface ScientificPaper {
   year: number;
   pmid: string;
   summary: string;
+  verified?: boolean;
+  studyType?: string;
 }
 
 interface SocialTrend {
@@ -37,6 +39,7 @@ interface Supplement {
   socialTrends?: SocialTrend[];
   personalizedReason?: string;
   recommendedDose?: string;
+  dataSource?: string;
 }
 
 
@@ -151,20 +154,20 @@ export function ResultsSection({ query, answers = {} }: ResultsSectionProps) {
             </h3>
             <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div>
-                <p className="font-medium text-foreground mb-1">Social Sentiment Analysis</p>
-                <p>AI scans X/Twitter and RedNote for recent user experiences, extracting benefits, side effects, and overall satisfaction patterns.</p>
+                <p className="font-medium text-foreground mb-1">Real Scientific Evidence from PubMed</p>
+                <p>Scientific papers are sourced directly from PubMed's database of peer-reviewed research. Evidence levels calculated from actual study types: A (RCTs/meta-analyses), B (moderate studies), C (limited data), D (insufficient).</p>
               </div>
               <div>
-                <p className="font-medium text-foreground mb-1">Scientific Evidence Grading</p>
-                <p>Cross-references ingredients with PubMed research. Evidence levels: A (strong RCTs), B (moderate studies), C (limited data), D (insufficient).</p>
+                <p className="font-medium text-foreground mb-1">AI-Analyzed Social Sentiment</p>
+                <p>AI analyzes patterns from social media (X/Twitter, RedNote, Instagram, Reddit) to estimate user satisfaction, trending hashtags, and community experiences. These are AI-generated estimates, not real-time data.</p>
               </div>
               <div>
                 <p className="font-medium text-foreground mb-1">Ingredient Efficacy Scoring</p>
-                <p>Evaluates active ingredients based on bioavailability, dosage adequacy, and documented mechanisms of action.</p>
+                <p>Evaluates active ingredients based on bioavailability, dosage adequacy, and documented mechanisms of action from scientific literature.</p>
               </div>
               <div>
-                <p className="font-medium text-foreground mb-1">Safety & Interaction Checks</p>
-                <p>Flags potential interactions with medications, contraindications, and side effects based on medical databases.</p>
+                <p className="font-medium text-foreground mb-1">Data Source Transparency</p>
+                <p>Papers marked with "Verified" badges are real studies from PubMed. Social trends and sentiment scores are AI-generated estimates based on typical patterns.</p>
               </div>
             </div>
           </div>
