@@ -6,6 +6,153 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function searchPubMed(ingredient: string, healthGoal: string): Promise<any[]> {
+  try {
+    // Search PubMed for papers
+    const searchTerm = encodeURIComponent(`${ingredient} ${healthGoal} clinical trial OR randomized controlled trial OR systematic review`);
+    const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${searchTerm}&retmax=15&retmode=json&sort=relevance`;
+    
+    console.log(`Searching PubMed for: ${ingredient} + ${healthGoal}`);
+    const searchResponse = await fetch(searchUrl);
+    const searchData = await searchResponse.json();
+    
+    const pmids = searchData.esearchresult?.idlist || [];
+    if (pmids.length === 0) return [];
+    
+    // Fetch paper details
+    await new Promise(resolve => setTimeout(resolve, 350)); // Rate limit: 3 req/sec
+    const fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmids.join(',')}&retmode=xml`;
+    const fetchResponse = await fetch(fetchUrl);
+    const xmlText = await fetchResponse.text();
+    
+    // Parse XML to extract papers
+    return parseXMLToPapers(xmlText);
+  } catch (error) {
+    console.error('PubMed API error:', error);
+    return [];
+  }
+}
+
+function parseXMLToPapers(xml: string): any[] {
+  const papers: any[] = [];
+  
+  // Extract PMIDs
+  const pmidMatches = xml.matchAll(/<PMID[^>]*>(\d+)<\/PMID>/g);
+  const pmids = [...pmidMatches].map(m => m[1]);
+  
+  // Extract titles
+  const titleMatches = xml.matchAll(/<ArticleTitle>([^<]+)<\/ArticleTitle>/g);
+  const titles = [...titleMatches].map(m => m[1]);
+  
+  // Extract journals
+  const journalMatches = xml.matchAll(/<Title>([^<]+)<\/Title>/g);
+  const journals = [...journalMatches].map(m => m[1]);
+  
+  // Extract years
+  const yearMatches = xml.matchAll(/<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/g);
+  const years = [...yearMatches].map(m => m[1]);
+  
+  // Extract first author
+  const authorMatches = xml.matchAll(/<Author[^>]*>[\s\S]*?<LastName>([^<]+)<\/LastName>/g);
+  const authors = [...authorMatches].map(m => `${m[1]} et al.`);
+  
+  // Extract abstracts
+  const abstractMatches = xml.matchAll(/<AbstractText[^>]*>([^<]+)<\/AbstractText>/g);
+  const abstracts = [...abstractMatches].map(m => m[1]);
+  
+  // Combine into paper objects
+  for (let i = 0; i < Math.min(pmids.length, titles.length); i++) {
+    if (titles[i] && pmids[i]) {
+      papers.push({
+        pmid: pmids[i],
+        title: titles[i],
+        journal: journals[i] || 'Unknown Journal',
+        year: parseInt(years[i]) || new Date().getFullYear(),
+        authors: authors[i] || 'Unknown Authors',
+        abstract: abstracts[i] || ''
+      });
+    }
+  }
+  
+  return papers;
+}
+
+async function filterPapersWithAI(papers: any[], ingredient: string, healthGoal: string, apiKey: string): Promise<any[]> {
+  if (papers.length === 0) return [];
+  
+  const papersText = papers.map((p, idx) => 
+    `${idx + 1}. Title: "${p.title}"
+    Year: ${p.year}
+    Journal: ${p.journal}
+    PMID: ${p.pmid}
+    Abstract: ${p.abstract.substring(0, 300)}...`
+  ).join('\n\n');
+  
+  const filterPrompt = `You are a scientific research evaluator. I have ${papers.length} real papers from PubMed about "${ingredient}" for "${healthGoal}".
+
+Select the 3 MOST RELEVANT and HIGHEST QUALITY papers based on:
+1. Direct relevance to ${ingredient} AND ${healthGoal}
+2. Study quality (prefer RCTs, meta-analyses, systematic reviews over observational studies)
+3. Recency (prefer papers from last 5 years)
+4. Clear, measurable outcomes
+
+Papers:
+${papersText}
+
+Return ONLY valid JSON array (no markdown, no explanation):
+[
+  {
+    "title": "exact paper title from above",
+    "authors": "authors from above",
+    "journal": "journal from above", 
+    "year": year_number,
+    "pmid": "pmid from above",
+    "summary": "1-2 sentence plain-English summary of the KEY FINDING (avoid jargon, explain what it means for users)",
+    "studyType": "rct" or "meta-analysis" or "systematic-review" or "observational" or "case-study"
+  }
+]
+
+Select exactly 3 papers. Use only the data provided above.`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: filterPrompt }],
+        temperature: 0.3,
+      }),
+    });
+    
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    const filtered = JSON.parse(cleanContent);
+    
+    return filtered.slice(0, 3).map((p: any) => ({
+      ...p,
+      verified: true
+    }));
+  } catch (error) {
+    console.error('AI filtering error:', error);
+    // Fallback: return first 3 with basic summaries
+    return papers.slice(0, 3).map(p => ({
+      title: p.title,
+      authors: p.authors,
+      journal: p.journal,
+      year: p.year,
+      pmid: p.pmid,
+      summary: p.abstract?.substring(0, 150) || 'Research on ' + ingredient,
+      studyType: 'observational',
+      verified: true
+    }));
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -154,40 +301,35 @@ CRITICAL: Create highly personalized "personalizedReason" and "recommendedDose" 
 
     console.log("Generated supplements:", supplements);
 
-    // Step 2: Fetch real PubMed papers for each supplement
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY");
-    
-    if (supabaseUrl && supabaseKey && Array.isArray(supplements)) {
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    // Step 2: Fetch real PubMed papers for each supplement and filter with AI
+    if (Array.isArray(supplements)) {
+      // Fetch PubMed papers for each supplement sequentially (to respect rate limits)
+      const supplementsWithRealPapers = [];
       
-      // Fetch PubMed papers for each supplement in parallel
-      const pubmedPromises = supplements.map(async (supplement: any) => {
+      for (const supplement of supplements) {
         try {
           // Extract main ingredient name for PubMed search
           const mainIngredient = Array.isArray(supplement.ingredients) && supplement.ingredients.length > 0
             ? typeof supplement.ingredients[0] === 'string'
-              ? supplement.ingredients[0]
+              ? supplement.ingredients[0].split(':')[0].trim() // Extract just ingredient name, not dosage
               : supplement.ingredients[0].name
             : supplement.name;
           
-          console.log(`Fetching PubMed papers for: ${mainIngredient}`);
+          console.log(`Searching PubMed for: ${mainIngredient} + ${query}`);
           
-          const { data: pubmedData, error: pubmedError } = await supabase.functions.invoke(
-            'fetch-pubmed-papers',
-            { body: { ingredientName: mainIngredient, maxResults: 3 } }
-          );
+          // Search PubMed for 10-20 papers
+          const allPapers = await searchPubMed(mainIngredient, query);
           
-          if (pubmedError) {
-            console.error(`PubMed fetch error for ${mainIngredient}:`, pubmedError);
-            return supplement; // Return original with AI-generated papers
-          }
-          
-          if (pubmedData?.papers && pubmedData.papers.length > 0) {
-            console.log(`Got ${pubmedData.papers.length} real papers for ${mainIngredient}`);
+          if (allPapers.length > 0) {
+            console.log(`Found ${allPapers.length} papers, filtering with AI...`);
             
-            // Calculate evidence level based on real papers
-            const studyTypes = pubmedData.papers.map((p: any) => p.studyType);
+            // Use AI to filter down to the 3 most relevant
+            const filteredPapers = await filterPapersWithAI(allPapers, mainIngredient, query, LOVABLE_API_KEY);
+            
+            console.log(`Filtered to ${filteredPapers.length} best papers for ${mainIngredient}`);
+            
+            // Calculate evidence level based on filtered papers
+            const studyTypes = filteredPapers.map((p: any) => p.studyType);
             let evidenceLevel = supplement.evidenceLevel;
             
             if (studyTypes.includes('meta-analysis') || studyTypes.includes('systematic-review')) {
@@ -196,28 +338,27 @@ CRITICAL: Create highly personalized "personalizedReason" and "recommendedDose" 
               evidenceLevel = 'A';
             } else if (studyTypes.includes('rct')) {
               evidenceLevel = 'B';
-            } else if (pubmedData.papers.length >= 2) {
+            } else if (filteredPapers.length >= 2) {
               evidenceLevel = 'C';
             } else {
               evidenceLevel = 'D';
             }
             
-            return {
+            supplementsWithRealPapers.push({
               ...supplement,
-              scientificPapers: pubmedData.papers,
+              scientificPapers: filteredPapers,
               evidenceLevel,
               dataSource: 'pubmed'
-            };
+            });
+          } else {
+            console.log(`No papers found for ${mainIngredient}, keeping AI-generated papers`);
+            supplementsWithRealPapers.push(supplement);
           }
-          
-          return supplement; // Keep AI-generated papers if PubMed fails
         } catch (error) {
-          console.error('Error fetching PubMed papers:', error);
-          return supplement; // Fallback to AI-generated papers
+          console.error('Error processing papers:', error);
+          supplementsWithRealPapers.push(supplement); // Fallback to AI-generated papers
         }
-      });
-      
-      const supplementsWithRealPapers = await Promise.all(pubmedPromises);
+      }
       
       return new Response(
         JSON.stringify({ supplements: supplementsWithRealPapers }),
