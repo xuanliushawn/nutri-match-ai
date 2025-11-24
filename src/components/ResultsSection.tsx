@@ -8,6 +8,21 @@ interface ResultsSectionProps {
   query: string;
 }
 
+interface ScientificPaper {
+  title: string;
+  authors: string;
+  journal: string;
+  year: number;
+  pmid: string;
+  summary: string;
+}
+
+interface SocialTrend {
+  platform: string;
+  hashtag: string;
+  mentions: number;
+}
+
 interface Supplement {
   name: string;
   description: string;
@@ -17,6 +32,8 @@ interface Supplement {
   warnings: string[];
   ingredients: string[];
   price: string;
+  scientificPapers?: ScientificPaper[];
+  socialTrends?: SocialTrend[];
 }
 
 

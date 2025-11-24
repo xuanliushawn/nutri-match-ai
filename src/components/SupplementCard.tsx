@@ -4,6 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, AlertTriangle, ExternalLink, Award, ThumbsUp } from "lucide-react";
 
+interface ScientificPaper {
+  title: string;
+  authors: string;
+  journal: string;
+  year: number;
+  pmid: string;
+  summary: string;
+}
+
+interface SocialTrend {
+  platform: string;
+  hashtag: string;
+  mentions: number;
+}
+
 interface SupplementCardProps {
   name: string;
   description: string;
@@ -14,6 +29,8 @@ interface SupplementCardProps {
   ingredients: string[];
   price?: string;
   imageUrl?: string;
+  scientificPapers?: ScientificPaper[];
+  socialTrends?: SocialTrend[];
 }
 
 export function SupplementCard({
@@ -26,6 +43,8 @@ export function SupplementCard({
   ingredients,
   price,
   imageUrl,
+  scientificPapers,
+  socialTrends,
 }: SupplementCardProps) {
   const getEvidenceBadgeVariant = (level: string) => {
     switch (level) {
@@ -140,6 +159,54 @@ export function SupplementCard({
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Scientific Evidence */}
+        {scientificPapers && scientificPapers.length > 0 && (
+          <div className="space-y-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Scientific Evidence
+            </h4>
+            <div className="space-y-2">
+              {scientificPapers.map((paper, index) => (
+                <div key={index} className="text-xs space-y-1">
+                  <p className="font-medium">{paper.title}</p>
+                  <p className="text-muted-foreground">
+                    {paper.authors} - {paper.journal}, {paper.year}
+                  </p>
+                  <p className="text-muted-foreground italic">{paper.summary}</p>
+                  <a 
+                    href={`https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    View on PubMed <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Social Media Trends */}
+        {socialTrends && socialTrends.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent" />
+              Trending on Social Media
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {socialTrends.map((trend, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {trend.platform}: {trend.hashtag} ({trend.mentions.toLocaleString()} posts)
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
 
