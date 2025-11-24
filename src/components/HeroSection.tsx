@@ -6,9 +6,10 @@ import heroBackground from "@/assets/hero-background.jpg";
 
 interface HeroSectionProps {
   onSearch: (query: string) => void;
+  mode: "supplements" | "coaching";
 }
 
-export function HeroSection({ onSearch }: HeroSectionProps) {
+export function HeroSection({ onSearch, mode }: HeroSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = () => {
@@ -47,14 +48,27 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
           {/* Heading */}
           <div className="space-y-4">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Find Your Perfect
-              <span className="block bg-gradient-primary bg-clip-text text-transparent">
-                Supplement Match
-              </span>
+              {mode === "supplements" ? (
+                <>
+                  Find Your Perfect
+                  <span className="block bg-gradient-primary bg-clip-text text-transparent">
+                    Supplement Match
+                  </span>
+                </>
+              ) : (
+                <>
+                  Get Personalized
+                  <span className="block bg-gradient-primary bg-clip-text text-transparent">
+                    Sports Coaching
+                  </span>
+                </>
+              )}
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Discover supplements backed by real user experiences and scientific evidence. 
-              Let AI analyze thousands of reviews and research papers to find what works for you.
+              {mode === "supplements" 
+                ? "Discover supplements backed by real user experiences and scientific evidence. Let AI analyze thousands of reviews and research papers to find what works for you."
+                : "Get expert coaching advice powered by AI analysis of top YouTube tutorials. Personalized tips based on your profile and training goals."
+              }
             </p>
           </div>
 
@@ -64,7 +78,10 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                  placeholder="What health goal are you looking to achieve? (e.g., hair growth, better sleep)"
+                  placeholder={mode === "supplements" 
+                    ? "What health goal are you looking to achieve? (e.g., hair growth, better sleep)"
+                    : "What do you need help with? (e.g., improve my tennis serve, run faster, build endurance)"
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -81,7 +98,10 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
               </Button>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Try: "boost energy", "improve sleep", "support hair growth", or "reduce stress"
+              {mode === "supplements" 
+                ? 'Try: "boost energy", "improve sleep", "support hair growth", or "reduce stress"'
+                : 'Try: "improve my serve", "run faster", "build core strength", or "increase flexibility"'
+              }
             </p>
           </div>
 

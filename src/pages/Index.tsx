@@ -5,7 +5,9 @@ import { User } from "@supabase/supabase-js";
 import { HeroSection } from "@/components/HeroSection";
 import { QuestionnaireSection } from "@/components/QuestionnaireSection";
 import { ResultsSection } from "@/components/ResultsSection";
+import { CoachingResultsSection } from "@/components/CoachingResultsSection";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ const Index = () => {
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"supplements" | "coaching">("supplements");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -45,8 +48,13 @@ const Index = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setShowQuestionnaire(true);
-    setShowResults(false);
+    if (mode === "supplements") {
+      setShowQuestionnaire(true);
+      setShowResults(false);
+    } else {
+      setShowQuestionnaire(false);
+      setShowResults(true);
+    }
   };
 
   const handleQuestionnaireComplete = (answers: Record<string, string>) => {
@@ -115,17 +123,36 @@ const Index = () => {
 
       {/* Main Content */}
       <main>
-        {!showQuestionnaire && !showResults ? (
-          <HeroSection onSearch={handleSearch} />
-        ) : showQuestionnaire && searchQuery ? (
-          <QuestionnaireSection 
-            query={searchQuery} 
-            onComplete={handleQuestionnaireComplete}
-            loading={false}
-          />
-        ) : showResults && searchQuery ? (
-          <ResultsSection query={searchQuery} answers={questionnaireAnswers} />
-        ) : null}
+        <Tabs value={mode} onValueChange={(v) => setMode(v as "supplements" | "coaching")} className="w-full">
+          <div className="container mx-auto px-4 pt-6">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsTrigger value="supplements">Supplement Match</TabsTrigger>
+              <TabsTrigger value="coaching">Sports Coaching</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="supplements" className="mt-0">
+            {!showQuestionnaire && !showResults ? (
+              <HeroSection onSearch={handleSearch} mode="supplements" />
+            ) : showQuestionnaire && searchQuery ? (
+              <QuestionnaireSection 
+                query={searchQuery} 
+                onComplete={handleQuestionnaireComplete}
+                loading={false}
+              />
+            ) : showResults && searchQuery ? (
+              <ResultsSection query={searchQuery} answers={questionnaireAnswers} />
+            ) : null}
+          </TabsContent>
+
+          <TabsContent value="coaching" className="mt-0">
+            {!showResults ? (
+              <HeroSection onSearch={handleSearch} mode="coaching" />
+            ) : searchQuery ? (
+              <CoachingResultsSection query={searchQuery} />
+            ) : null}
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Footer */}
