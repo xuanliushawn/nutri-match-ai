@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-coaching]
 verify_jwt = false
+
+[functions.fetch-pubmed-papers]
+verify_jwt = false
