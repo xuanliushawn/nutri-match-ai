@@ -146,10 +146,10 @@ export function QuestionnaireSection({ query, onComplete, loading }: Questionnai
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Recommendations...
+                      Analyzing social reviews and scientific evidence...
                     </>
                   ) : (
-                    "Get My Recommendations"
+                    "See my supplement matches"
                   )}
                 </Button>
                 <Button 

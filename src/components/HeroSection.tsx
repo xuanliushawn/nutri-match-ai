@@ -42,7 +42,7 @@ export function HeroSection({ onSearch, mode }: HeroSectionProps) {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/80 backdrop-blur-sm border shadow-soft">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">AI-Powered Supplement Discovery</span>
+            <span className="text-sm font-medium">AI-powered supplement and coaching insights</span>
           </div>
 
           {/* Heading */}

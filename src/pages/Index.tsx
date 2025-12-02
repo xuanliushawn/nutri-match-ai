@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { QuestionnaireSection } from "@/components/QuestionnaireSection";
 import { ResultsSection } from "@/components/ResultsSection";
 import { CoachingResultsSection } from "@/components/CoachingResultsSection";
+import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -85,6 +86,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      {/* Onboarding Flow */}
+      <OnboardingFlow onComplete={() => {}} />
+      
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-sm shadow-soft">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

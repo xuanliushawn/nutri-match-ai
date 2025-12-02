@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, AlertTriangle, ExternalLink, Award, ThumbsUp } from "lucide-react";
+import { TrendingUp, AlertTriangle, ExternalLink, Award, ThumbsUp, CheckCircle2 } from "lucide-react";
 
 interface ScientificPaper {
   title: string;
@@ -11,6 +11,8 @@ interface ScientificPaper {
   year: number;
   pmid: string;
   summary: string;
+  highlightSentence?: string;
+  isVerified?: boolean;
 }
 
 interface SocialTrend {
@@ -66,13 +68,13 @@ export function SupplementCard({
   const getEvidenceLabel = (level: string) => {
     switch (level) {
       case "A":
-        return "Strong Evidence";
+        return "Strong evidence";
       case "B":
-        return "Moderate Evidence";
+        return "Moderate evidence";
       case "C":
-        return "Limited Evidence";
+        return "Limited evidence";
       default:
-        return "Insufficient Evidence";
+        return "Insufficient evidence";
     }
   };
 
@@ -113,12 +115,12 @@ export function SupplementCard({
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              Why This Is Good For You
+              Why this is good for you
             </h4>
             <p className="text-sm">{personalizedReason}</p>
             {recommendedDose && (
               <p className="text-sm font-medium text-primary">
-                Recommended Dose: {recommendedDose}
+                Recommended dose: {recommendedDose}
               </p>
             )}
           </div>
@@ -129,9 +131,9 @@ export function SupplementCard({
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <ThumbsUp className="w-4 h-4 text-primary" />
-              <span className="font-medium">User Sentiment</span>
+              <span className="font-medium">User sentiment</span>
             </div>
-            <span className="font-semibold">{socialSentiment}% Positive</span>
+            <span className="font-semibold">{socialSentiment}% positive</span>
           </div>
           <Progress value={socialSentiment} className="h-2" />
           <p className="text-xs text-muted-foreground">
@@ -143,7 +145,7 @@ export function SupplementCard({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium">
             <TrendingUp className="w-4 h-4 text-success" />
-            <span>Key Benefits</span>
+            <span>Key benefits</span>
           </div>
           <ul className="space-y-1.5">
             {keyBenefits.map((benefit, index) => (
@@ -157,7 +159,7 @@ export function SupplementCard({
 
         {/* Active Ingredients */}
         <div className="space-y-2">
-          <h4 className="text-sm font-medium">Active Ingredients</h4>
+          <h4 className="text-sm font-medium">Active ingredients</h4>
           <div className="flex flex-wrap gap-1.5">
             {ingredients.map((ingredient, index) => {
               const displayText = typeof ingredient === 'string' 
@@ -178,7 +180,7 @@ export function SupplementCard({
           <div className="space-y-2 p-4 bg-warning/5 border border-warning/20 rounded-lg">
             <div className="flex items-center gap-2 text-sm font-medium text-warning">
               <AlertTriangle className="w-4 h-4" />
-              <span>Safety Considerations</span>
+              <span>Safety considerations</span>
             </div>
             <ul className="space-y-1">
               {warnings.map((warning, index) => (
@@ -197,27 +199,50 @@ export function SupplementCard({
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Scientific Evidence
+              Scientific evidence
+              {scientificPapers.some(p => p.isVerified) && (
+                <Badge variant="success" className="ml-2 text-xs">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  PubMed verified
+                </Badge>
+              )}
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {scientificPapers.map((paper, index) => (
-                <div key={index} className="text-xs space-y-1">
-                  <p className="font-medium">{paper.title}</p>
+                <div key={index} className="text-xs space-y-1 p-3 bg-background/50 rounded-lg border">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium flex-1">{paper.title}</p>
+                    {paper.isVerified && (
+                      <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+                    )}
+                  </div>
                   <p className="text-muted-foreground">
                     {paper.authors} - {paper.journal}, {paper.year}
                   </p>
-                  <p className="text-muted-foreground italic">{paper.summary}</p>
+                  {paper.highlightSentence && (
+                    <p className="text-muted-foreground text-sm border-l-2 border-primary/50 pl-2 py-1">
+                      “{paper.highlightSentence}”
+                    </p>
+                  )}
+                  <p className="text-muted-foreground italic text-xs mt-1">
+                    {paper.summary}
+                  </p>
                   <a 
                     href={`https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center gap-1"
+                    className="text-primary hover:underline inline-flex items-center gap-1 font-medium"
                   >
-                    View on PubMed <ExternalLink className="w-3 h-3" />
+                    Read full study <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               ))}
             </div>
+            {scientificPapers.some(p => p.isVerified) && (
+              <p className="text-xs text-muted-foreground italic">
+                ✓ Papers verified from the PubMed scientific database
+              </p>
+            )}
           </div>
         )}
 
@@ -226,7 +251,7 @@ export function SupplementCard({
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-accent" />
-              Trending on Social Media
+              Trending on social media
             </h4>
             <div className="flex flex-wrap gap-2">
               {socialTrends.map((trend, index) => (
@@ -241,7 +266,7 @@ export function SupplementCard({
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <Button variant="default" className="flex-1">
-            View Details
+            View details
           </Button>
           <Button variant="outline">
             <ExternalLink className="w-4 h-4" />
